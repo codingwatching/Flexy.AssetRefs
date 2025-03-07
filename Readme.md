@@ -69,8 +69,8 @@ and can be replaced with your own implementation. It is only 5 virtual methods t
 **Roadmap**
 -----------------------
 
-**Auto unloaders:** want to add few Api's to help auto unload loaded assets    
-**Unity 6 Awaitables:** I think about moving Api to Unity 6 Awaitables in asset version 6.x  
+**Auto unloaders:** will add few Api's to help auto unload loaded assets    
+**Unity 6 Awaitables:** We think about moving Api to Unity 6 Awaitables in asset version 6.x  
 
 
 **Technical details**
@@ -87,5 +87,5 @@ and can be replaced with your own implementation. It is only 5 virtual methods t
 
 
 This package uses cropped version of UniTask package under MIT License  
-See [Third-Party Notices.md](ThirdPartyNotices.md) file in package for details
-Full and latest version can be installed alongside this package without issues from [there](https://github.com/Cysharp/UniTask)  
+See [Third-Party Notices.md](ThirdPartyNotices.md) file in package for details  
+Full and latest version can be installed alongside this package without issues  
