@@ -63,7 +63,7 @@ their own loading methods with any indirections, additional checks or better kno
 **Double Easily Extendable:** asset loading done through AssetLoader instance that is backend for loading any ref 
 and can be replaced with your own implementation. It is only 5 virtual methods to implement 
 
-**Already Used in Games:** Sniper League, Animals Happy Run, Cyberstrike
+**Already Used in Games:** Sniper League, Animals Happy Run, Cyberstrike, Combat Master
 **In production on platforms:** iOS, Android, Windows, Linux, Mac
 
 **Roadmap**
