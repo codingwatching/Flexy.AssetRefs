@@ -135,7 +135,7 @@ namespace Flexy.AssetRefs.Editor
         }
 		protected static	Type	GetRefType			( FieldInfo fieldInfo )												
 		{
-			var type = typeof(Object);
+			var type = fieldInfo.FieldType;
 			
 			if			( type.IsArray )															type = fieldInfo.FieldType.GetElementType()!;
 			else if		( type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>) )	type = fieldInfo.FieldType.GetGenericArguments()[0];

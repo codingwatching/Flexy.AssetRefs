@@ -163,7 +163,7 @@ public abstract class AssetsLoader
 		
 #if UNITY_EDITOR
 		
-		if( UnityEditor.AssetDatabase.IsMainAsset( asset ) && UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid, out Int64 _ ) )
+		if( (asset is MonoBehaviour or GameObject or ScriptableObject || UnityEditor.AssetDatabase.IsMainAsset( asset )) && UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid, out Int64 _ ) )
 			return new( new UnityEditor.GUID( guid ).ToHash( ), 0 );	
 		
 		if( UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid2, out long instanceId ) )

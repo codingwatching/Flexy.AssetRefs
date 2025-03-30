@@ -30,6 +30,12 @@ public class AssetsLoader_Resources : AssetsLoader
 		if( !resourceRef )
 			resourceRef		= Resources.Load<ResourceRef>( $"Fun.Flexy/AssetRefs/{@ref.Uid.ToString()}" );
 		
+		if( !resourceRef )
+		{
+			Debug.LogError( $"[AssetsLoader] Resources - RefFile is absent for: {@ref}" );
+			return null;
+		}
+		
 		return LoadFinalising<T>( resourceRef.Ref );
 	}
 	
