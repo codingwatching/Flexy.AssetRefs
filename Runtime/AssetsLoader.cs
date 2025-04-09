@@ -216,10 +216,14 @@ public abstract class AssetsLoader
 				{
 					foreach ( var scn in scenesToUnload )
 					{
-						if ( ao != null ) 
+						if ( ao != null )
+						{
 							await ao.ToUniTask( );
+							ao = null;
+						}
 						
-						ao = SceneManager.UnloadSceneAsync( scn, unloadOptions );
+						if( scn.IsValid() )
+							ao = SceneManager.UnloadSceneAsync( scn, unloadOptions );
 					}
 				}
 			
