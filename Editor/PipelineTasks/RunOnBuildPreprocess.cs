@@ -8,6 +8,24 @@ public class RunOnBuildPreprocess : IPipelineTask, IPreprocessBuildWithReport
 	public Int32 callbackOrder { get; }
 	public void OnPreprocessBuild( BuildReport report )
 	{
+		var scenesOld = EditorBuildSettings.scenes;
+		FindAndRunAssetPipeline();
+		
+		var scenesNew = EditorBuildSettings.scenes;
+		if (scenesNew.Length != scenesOld.Length) 
+			throw new BuildFailedException("Scene list can not be changed from inside build");
+		
+		for (var i = 0; i < scenesNew.Length; i++)
+		{
+			if (scenesNew[i].path.Equals(scenesOld[i].path) && scenesNew[i].enabled == scenesOld[i].enabled)
+				continue;
+				
+			throw new BuildFailedException("Scene list can not be changed from inside build");
+		}
+	}
+	
+	public static void FindAndRunAssetPipeline( )
+	{
 		var guids = AssetDatabase.FindAssets("t:Pipeline");
 		foreach ( var guid in guids )
 		{

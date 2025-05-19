@@ -70,7 +70,7 @@ public class ResourcesPopulateRefs : IPipelineTask
 		{
 			AssetDatabase.StopAssetEditing( );
 			AssetDatabase.SaveAssets( );
-			AssetDatabase.Refresh( );
+			AssetDatabase.Refresh( ImportAssetOptions.ForceSynchronousImport );
 		}
 	}
 }
