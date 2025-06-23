@@ -112,9 +112,9 @@ public abstract class AssetsLoader
 		
 		return sceneTask;
 	}
-	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, UnloadSceneOptions unloadOptions = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects )
+	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, UnloadSceneOptions unloadOptions = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects, DummySceneFlags dummyFlags = DummySceneFlags.DummyCamera | DummySceneFlags.DummyListener, Action? createSceneObjects = null )
 	{
-		var task = LoadDummyScene_Impl( mode, unloadOptions );
+		var task = LoadDummyScene_Impl( mode, unloadOptions, dummyFlags, createSceneObjects );
 		
 		WaitSceneLoadStart( task, ctx ).Forget( );
 		
@@ -179,14 +179,14 @@ public abstract class AssetsLoader
 	protected abstract		T?						LoadAssetSync_Impl<T>		( AssetRef @ref ) where T:Object;
 	protected abstract		String?					GetSceneName_Impl			( SceneRef @ref );
 	protected abstract 		LoadSceneTask			LoadSceneAsync_Impl			( SceneRef @ref, LoadSceneTask.Parameters p );
-	protected virtual		LoadSceneTask			LoadDummyScene_Impl			( LoadSceneMode mode, UnloadSceneOptions unloadOptions = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects )
+	protected virtual		LoadSceneTask			LoadDummyScene_Impl			( LoadSceneMode mode, UnloadSceneOptions unloadOptions, DummySceneFlags dummyFlags, Action? createSceneObjects )
 	{
 		var data			= LoadSceneTask.RentSceneLoadData( );
 		data.Scene			= default;
 		
-		return new( LoadDummyScene_Internal( data, mode, unloadOptions ), data );
+		return new( LoadDummyScene_Internal( data, mode, unloadOptions, dummyFlags, createSceneObjects ), data );
 		
-		static async UniTask<Scene>  LoadDummyScene_Internal( LoadSceneTask.LoadData data, LoadSceneMode mode, UnloadSceneOptions unloadOptions )
+		static async UniTask<Scene>  LoadDummyScene_Internal( LoadSceneTask.LoadData data, LoadSceneMode mode, UnloadSceneOptions unloadOptions, DummySceneFlags dummyFlags, Action? createSceneObjects )
 		{
 			try
 			{
@@ -208,7 +208,24 @@ public abstract class AssetsLoader
 			
 				SceneManager.SetActiveScene( dummy );
 			
-				var dummyCam = new GameObject( "DummyCam", typeof(Camera), typeof(AudioListener) );
+				if ( createSceneObjects != null)
+				{
+					try						{ createSceneObjects( ); }
+					catch (Exception ex)	{ Debug.LogException(ex); }
+				}
+				else if ( dummyFlags == DummySceneFlags.None )
+				{
+					new GameObject( "DummyObj" );
+				}
+				else
+				{
+					var list = new List<Type>( );
+					
+					if( (dummyFlags & DummySceneFlags.DummyCamera) != 0 )	list.Add( typeof(Camera) );
+					if( (dummyFlags & DummySceneFlags.DummyListener) != 0 )	list.Add( typeof(AudioListener) );
+					
+					new GameObject( "DummyObj", list.ToArray() );
+				}
 					
 				data.Progress = 0.9f;
 					
@@ -399,4 +416,12 @@ public readonly struct LoadSceneTask
 		Int32				Priority		= 100, 
 		Boolean				ActivateOnLoad	= true 
 	);
+}
+
+[Flags]
+public enum DummySceneFlags: Byte
+{
+	None = 0,
+	DummyCamera = 1 << 0,
+	DummyListener = 1 << 1,
 }
