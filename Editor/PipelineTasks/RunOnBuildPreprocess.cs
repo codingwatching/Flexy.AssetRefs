@@ -6,25 +6,37 @@ namespace Flexy.AssetRefs.Editor.PipelineTasks;
 public class RunOnBuildPreprocess : IPipelineTask, IPreprocessBuildWithReport
 {
 	public Int32 callbackOrder { get; }
-	public void OnPreprocessBuild( BuildReport report )
+	
+	public			void	OnPreprocessBuild		( BuildReport report )
 	{
-		var scenesOld = EditorBuildSettings.scenes;
+		var cur = EditorBuildSettings.scenes;
 		FindAndRunAssetPipeline();
 		
-		var scenesNew = EditorBuildSettings.scenes;
-		if (scenesNew.Length != scenesOld.Length) 
-			throw new BuildFailedException("Scene list can not be changed from inside build");
+		var collected = EditorBuildSettings.scenes;
+		if (collected.Length != cur.Length) 
+			ThrowException( cur, collected );
 		
-		for (var i = 0; i < scenesNew.Length; i++)
+		for (var i = 0; i < collected.Length; i++)
 		{
-			if (scenesNew[i].path.Equals(scenesOld[i].path) && scenesNew[i].enabled == scenesOld[i].enabled)
+			if (collected[i].path.Equals(cur[i].path) && collected[i].enabled == cur[i].enabled)
 				continue;
 				
-			throw new BuildFailedException("Scene list can not be changed from inside build");
+			ThrowException( cur, collected );
 		}
 	}
+	private			void	ThrowException			( EditorBuildSettingsScene[] oldScenes, EditorBuildSettingsScene[] newScenes )
+	{
+		var cur = "\nCurrent Scenes";
+		foreach (var sc in oldScenes)
+			cur += $"\n{sc.path} enabled:{sc.enabled}";
+		
+		var collected = "\nCollected Scenes";
+		foreach (var sc in newScenes)
+			collected += $"\n{sc.path} enabled:{sc.enabled}";
 	
-	public static void FindAndRunAssetPipeline( )
+		throw new BuildFailedException( "Scene list can not be changed from inside build" + cur + collected );
+	}
+	public static	void	FindAndRunAssetPipeline	( )
 	{
 		var guids = AssetDatabase.FindAssets("t:Pipeline");
 		foreach ( var guid in guids )
