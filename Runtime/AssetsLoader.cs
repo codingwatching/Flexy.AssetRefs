@@ -114,7 +114,20 @@ public abstract class AssetsLoader
 	}
 	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, UnloadSceneOptions unloadOptions = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects, DummySceneFlags dummyFlags = DummySceneFlags.DummyCamera | DummySceneFlags.DummyListener, Action? createSceneObjects = null )
 	{
-		var task = LoadDummyScene_Impl( mode, unloadOptions, dummyFlags, createSceneObjects );
+		var list = new List<Type>();
+
+		if( (dummyFlags & DummySceneFlags.DummyCamera) != 0 )	list.Add( typeof(Camera) );
+		if( (dummyFlags & DummySceneFlags.DummyListener) != 0 )	list.Add( typeof(AudioListener) );
+
+		return LoadDummyScene( ctx, mode, unloadOptions, createSceneObjects, list.ToArray() );
+	}
+	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, params Type[] components )
+	{
+		return LoadDummyScene( ctx, mode, UnloadSceneOptions.None, null, components );
+	}
+	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, UnloadSceneOptions unloadOptions = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects, Action? createSceneObjects = null, params Type[] components )
+	{
+		var task = LoadDummyScene_Impl( mode, unloadOptions, createSceneObjects, components );
 		
 		WaitSceneLoadStart( task, ctx ).Forget( );
 		
@@ -181,79 +194,65 @@ public abstract class AssetsLoader
 	protected abstract 		LoadSceneTask			LoadSceneAsync_Impl			( SceneRef @ref, LoadSceneTask.Parameters p );
 	protected virtual		LoadSceneTask			LoadDummyScene_Impl			( LoadSceneMode mode, UnloadSceneOptions unloadOptions, DummySceneFlags dummyFlags, Action? createSceneObjects )
 	{
+		var components = new List<Type>();
+
+		if( (dummyFlags & DummySceneFlags.DummyCamera) != 0 )	components.Add( typeof(Camera) );
+		if( (dummyFlags & DummySceneFlags.DummyListener) != 0 )	components.Add( typeof(AudioListener) );
+	
+		return LoadDummyScene_Impl( mode, unloadOptions, createSceneObjects, components.ToArray() ); 
+	}
+	protected virtual		LoadSceneTask			LoadDummyScene_Impl			( LoadSceneMode mode, UnloadSceneOptions unloadOptions, Action? createSceneObjects, params Type[] components )
+	{
 		var data			= LoadSceneTask.RentSceneLoadData( );
 		data.Scene			= default;
 		
-		return new( LoadDummyScene_Internal( data, mode, unloadOptions, dummyFlags, createSceneObjects ), data );
+		return new( LoadDummyScene_Internal( data, mode, unloadOptions, createSceneObjects, components ), data );
 		
-		static async UniTask<Scene>  LoadDummyScene_Internal( LoadSceneTask.LoadData data, LoadSceneMode mode, UnloadSceneOptions unloadOptions, DummySceneFlags dummyFlags, Action? createSceneObjects )
+		static async UniTask<Scene>  LoadDummyScene_Internal( LoadSceneTask.LoadData data, LoadSceneMode mode, UnloadSceneOptions unloadOptions, Action? createSceneObjects, params Type[] components )
 		{
 			try
 			{
-				AsyncOperation?	ao				= null;
 				List<Scene>?	scenesToUnload	= null; 
 					
-				if( mode == LoadSceneMode.Single )
+				if (mode == LoadSceneMode.Single)
 				{
-					scenesToUnload = new( );
+					scenesToUnload = new();
 					var count = SceneManager.loadedSceneCount;
 					for (var i = count - 1; i >= 0; i--)
-						scenesToUnload.Add( SceneManager.GetSceneAt( i ) );
+						scenesToUnload.Add( SceneManager.GetSceneAt(i) );
 				}
 			
-				var dummy	= SceneManager.CreateScene( "Dummy" );
+				var dummy	= SceneManager.CreateScene("Dummy");
 				data.Scene	= dummy;
-					
-				await UniTask.NextFrame( );
+				
+				await UniTask.NextFrame();
 			
-				SceneManager.SetActiveScene( dummy );
+				SceneManager.SetActiveScene(dummy);
+			
+				new GameObject( "DummyObj", components );
 			
 				if ( createSceneObjects != null)
 				{
-					try						{ createSceneObjects( ); }
+					try						{ createSceneObjects(); }
 					catch (Exception ex)	{ Debug.LogException(ex); }
 				}
-				else if ( dummyFlags == DummySceneFlags.None )
-				{
-					new GameObject( "DummyObj" );
-				}
-				else
-				{
-					var list = new List<Type>( );
-					
-					if( (dummyFlags & DummySceneFlags.DummyCamera) != 0 )	list.Add( typeof(Camera) );
-					if( (dummyFlags & DummySceneFlags.DummyListener) != 0 )	list.Add( typeof(AudioListener) );
-					
-					new GameObject( "DummyObj", list.ToArray() );
-				}
-					
+			
 				data.Progress = 0.9f;
 					
-				if( scenesToUnload != null )
+				if (scenesToUnload != null)
 				{
-					foreach ( var scn in scenesToUnload )
-					{
-						if ( ao != null )
-						{
-							await ao.ToUniTask( );
-							ao = null;
-						}
-						
-						if( scn.IsValid() )
-							ao = SceneManager.UnloadSceneAsync( scn, unloadOptions );
-					}
+					foreach (var scn in scenesToUnload)
+						if (scn.IsValid())
+							await SceneManager.UnloadSceneAsync( scn, unloadOptions ).ToUniTask();
 				}
 			
-				if ( ao != null ) 
-					await ao.ToUniTask( );	
-				
 				data.Progress = 1f;
 				
 				return dummy;
 			}
 			finally
 			{
-				data.Release( ).Forget( );
+				data.Release().Forget();
 			}
 		}
 	}
