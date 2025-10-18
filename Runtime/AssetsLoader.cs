@@ -114,12 +114,11 @@ public abstract class AssetsLoader
 	}
 	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, UnloadSceneOptions unloadOptions = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects, DummySceneFlags dummyFlags = DummySceneFlags.DummyCamera | DummySceneFlags.DummyListener, Action? createSceneObjects = null )
 	{
-		var list = new List<Type>();
-
-		if( (dummyFlags & DummySceneFlags.DummyCamera) != 0 )	list.Add( typeof(Camera) );
-		if( (dummyFlags & DummySceneFlags.DummyListener) != 0 )	list.Add( typeof(AudioListener) );
-
-		return LoadDummyScene( ctx, mode, unloadOptions, createSceneObjects, list.ToArray() );
+		var task = LoadDummyScene_Impl( mode, unloadOptions, dummyFlags, createSceneObjects );
+		
+		WaitSceneLoadStart( task, ctx ).Forget( );
+		
+		return task;
 	}
 	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, params Type[] components )
 	{
