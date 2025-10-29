@@ -5,10 +5,17 @@ namespace Flexy.AssetRefs.Editor.PipelineTasks;
 
 public class RunOnBuildPreprocess : IPipelineTask, IPreprocessBuildWithReport
 {
+	public static Boolean DisableRunOnce;
 	public Int32 callbackOrder { get; }
 	
 	public			void	OnPreprocessBuild		( BuildReport report )
 	{
+		if (DisableRunOnce)
+		{
+			DisableRunOnce = false;
+			return;
+		}
+	
 		var cur = EditorBuildSettings.scenes;
 		FindAndRunAssetPipeline();
 		
@@ -39,18 +46,18 @@ public class RunOnBuildPreprocess : IPipelineTask, IPreprocessBuildWithReport
 	public static	void	FindAndRunAssetPipeline	( )
 	{
 		var guids = AssetDatabase.FindAssets("t:Pipeline");
-		foreach ( var guid in guids )
+		foreach (var guid in guids)
 		{
-			var pipeline = AssetDatabase.LoadAssetAtPath<Pipeline>( AssetDatabase.GUIDToAssetPath( guid ) );
+			var pipeline = AssetDatabase.LoadAssetAtPath<Pipeline>( AssetDatabase.GUIDToAssetPath(guid) );
+
+			if (pipeline.DisablePipeline || pipeline.EnabledTasks[0].Task is not RunOnBuildPreprocess || !pipeline.EnabledTasks[0].Enabled) 
+				continue;
 			
-			if( pipeline.EnabledTasks[0].Task is RunOnBuildPreprocess )
-			{
-				Debug.Log( $"[On Pre Build] Run Pipeline: {pipeline.name}" );
-				pipeline.RunTasks( );
+			Debug.Log( $"[On Pre Build] Run Pipeline: {pipeline.name}" );
+			pipeline.RunTasks();
 		
-				AssetDatabase.SaveAssets( );
-				AssetDatabase.Refresh( );
-			}
+			AssetDatabase.SaveAssets();
+			AssetDatabase.Refresh();
 		}
 	}
 

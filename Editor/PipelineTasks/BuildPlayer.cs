@@ -4,8 +4,9 @@ namespace Flexy.AssetRefs.Editor.PipelineTasks;
 
 public class BuildPlayer : IPipelineTask
 {
-	[SerializeField] private String _outputDirectory	= "Builds";
-	[SerializeField] private String _buildName			= "MyGame";
+	[SerializeField] private String		_outputDirectory	= "Builds";
+	[SerializeField] private String		_buildName			= "MyGame";
+	[SerializeField] private Boolean	_disablePreprocessPipelines = false;
 
 	public void Run( Pipeline ppln, Context ctx )
 	{
@@ -35,8 +36,8 @@ public class BuildPlayer : IPipelineTask
 		fullBuildName	= _buildName;
 #endif
         
-		var outputPath		= Path.Combine(outputDirectory, fullBuildName);
-        outputPath += outoutExtension;
+		var outputPath	= Path.Combine(outputDirectory, fullBuildName);
+        outputPath		+= outoutExtension;
         
 		if (!Directory.Exists(outputDirectory))
 			Directory.CreateDirectory(outputDirectory);
@@ -51,17 +52,24 @@ public class BuildPlayer : IPipelineTask
 			target = EditorUserBuildSettings.activeBuildTarget,
 			options = BuildOptions.None
 		};
-        
+
+		if (_disablePreprocessPipelines)
+			RunOnBuildPreprocess.DisableRunOnce = true;
+			
 		var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+		
+		if (_disablePreprocessPipelines)
+			RunOnBuildPreprocess.DisableRunOnce = false;
+		
 		var summary = report.summary;
-        
+		
 		if (summary.result == BuildResult.Succeeded)
 		{
 			Debug.Log($"Build succeeded: {summary.totalSize} bytes");
 			Debug.Log($"Build location: {outputPath}");
 			
 			if (!Application.isBatchMode)
-				Application.OpenURL( _outputDirectory );
+				Application.OpenURL( outputDirectory );
 		}
 		else if (summary.result == BuildResult.Failed)
 		{
