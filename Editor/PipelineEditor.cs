@@ -1,6 +1,5 @@
 using System.Reflection;
 using UnityEditor.UIElements;
-using UnityEngine.UIElements;
 using Button = UnityEngine.UIElements.Button;
 
 namespace Flexy.AssetRefs.Editor

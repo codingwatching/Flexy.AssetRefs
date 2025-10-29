@@ -67,6 +67,53 @@ namespace Flexy.AssetRefs.Pipelines
 			[SerializeReference]
 			public IPipelineTask?	Task;
 		}
+		
+#if UNITY_EDITOR
+		public static void CmdRun	( )		
+		{
+			var args = Environment.GetCommandLineArgs();
+			var pipelineId = GetArg(args, "-pipeline");
+        
+			if (String.IsNullOrEmpty(pipelineId))
+			{
+				Debug.LogError("No pipeline specified. Use -pipeline argument with name or GUID.");
+				UnityEditor.EditorApplication.Exit(1);
+				return;
+			}
+        
+			var assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(pipelineId);
+			if (String.IsNullOrEmpty(assetPath))
+			{
+				var guids = UnityEditor.AssetDatabase.FindAssets($"{pipelineId} t:Pipeline");
+				if (guids.Length > 0)
+					assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]);
+			}
+        
+			var pipeline = UnityEditor.AssetDatabase.LoadAssetAtPath<Pipeline>(assetPath);
+        
+			if (pipeline == null)
+			{
+				Debug.LogError($"Pipeline not found: {pipelineId}");
+				UnityEditor.EditorApplication.Exit(1);
+				return;
+			}
+        
+			Debug.Log($"Running pipeline: {assetPath}");
+			pipeline.RunTasks();
+			Debug.Log("Pipeline completed!");
+			UnityEditor.EditorApplication.Exit(0);
+			return;
+
+			static String GetArg(String[] args, String name)
+			{
+				for (var i = 0; i < args.Length; i++)
+					if (args[i] == name && i + 1 < args.Length)
+						return args[i + 1];
+						
+				return String.Empty;
+			}
+		}
+#endif
 	}
 	
 	public class Context : Dictionary<Type, System.Object>
