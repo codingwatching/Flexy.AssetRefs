@@ -2,14 +2,27 @@ namespace Flexy.AssetRefs.Editor.PipelineTasks;
 
 public class SetUniversalVersion : IPipelineTask
 {
+	[SerializeField]	String?		_versionTag;
 	[SerializeField]	Int32		_n;
 	[SerializeField]	ETimeSource	_timeSource;
 	[SerializeField]	EMajorType	_major;
 	[SerializeField]	EMinorType	_minor;
-	[SerializeField]	EBuildType	_build;
+	[SerializeField]	EBuildTime	_buildTime;
 
 	public void Run( Pipeline ppln, Context ctx )
 	{
+		var buildArtifactsDir	= "Assets/Resources/Fun.Flexy/BuildArtifacts";
+		var versionTagPath		= buildArtifactsDir + "/VersionTag.txt";
+		
+		if (!Directory.Exists(buildArtifactsDir))
+			Directory.CreateDirectory(buildArtifactsDir);
+		
+		if (!String.IsNullOrWhiteSpace(_versionTag))
+		{
+			File.WriteAllText(versionTagPath, _versionTag);
+			AssetDatabase.ImportAsset(versionTagPath, ImportAssetOptions.ForceSynchronousImport);
+		}
+		
 		var time = _timeSource switch
 		{
 			ETimeSource.UTC		=> DateTime.UtcNow, 
@@ -33,17 +46,15 @@ public class SetUniversalVersion : IPipelineTask
 				break;
 		}
 
-		var build = _build switch
+		var buildTime = _buildTime switch
 		{
-			EBuildType.Hours					=> $"{time.Hour + (time.Day == 31 ? 50 : 0):00}",
-			EBuildType.HoursAnd10th				=> $"{time.Hour + (time.Day == 31 ? 50 : 0):00}{Mathf.RoundToInt(time.Minute / 6f):0}",
-			EBuildType.QwartersOfHours			=> $"{time.Hour*4 + time.Minute/15:00}",
-			EBuildType.QwartersOfHoursAnd10th	=> $"{time.Hour*4 + time.Minute/15:00}{Mathf.RoundToInt(time.Minute % 15 / 1.5f)}",
+			EBuildTime.Hours					=> $"{time.Hour + (time.Day == 31 ? 50 : 0):00}",
+			EBuildTime.HoursAnd10th				=> $"{time.Hour + (time.Day == 31 ? 50 : 0):00}{Mathf.RoundToInt(time.Minute / 6f):0}",
+			EBuildTime.QwartersOfHours			=> $"{time.Hour*4 + time.Minute/15:00}",
+			EBuildTime.QwartersOfHoursAnd10th	=> $"{time.Hour*4 + time.Minute/15:00}{Mathf.RoundToInt(time.Minute % 15 / 1.5f)}",
 		};
 		
-		var versionString = $"{major}.{minor}.{build}";
-
-		Debug.Log( $"[SetUniversalVersion] - Setting universal version {versionString}" );
+		var versionString = $"{major}.{minor}.{buildTime}";
 
 		PlayerSettings.bundleVersion				= versionString;
 		
@@ -51,6 +62,11 @@ public class SetUniversalVersion : IPipelineTask
 		PlayerSettings.macOS.buildNumber			= versionString;
 		PlayerSettings.tvOS.buildNumber				= versionString;
 		PlayerSettings.iOS.buildNumber				= versionString;
+		
+		if (String.IsNullOrWhiteSpace(_versionTag))
+			Debug.Log( $"[Set Universal Version] - Setting universal version {versionString}" );
+		else
+			Debug.Log( $"[Set Universal Version] - Setting universal version {versionString} and tag {_versionTag}" );
 	}
 
 	public enum ETimeSource : byte
@@ -60,19 +76,19 @@ public class SetUniversalVersion : IPipelineTask
 	}
 	public enum EMajorType : byte
 	{
-		YearMinusN,
 		N,
+		YearMinusN,
 	}
 	public enum EMinorType : byte
 	{
 		MonthAndDay,
 		SeasonAndDay,
 	}
-	public enum EBuildType : byte
+	public enum EBuildTime : byte
 	{
 		Hours,
-		HoursAnd10th,
 		QwartersOfHours,
+		HoursAnd10th,
 		QwartersOfHoursAnd10th,
 	}
 }

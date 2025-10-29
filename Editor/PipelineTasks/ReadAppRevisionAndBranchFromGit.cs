@@ -1,24 +1,26 @@
 namespace Flexy.AssetRefs.Editor.PipelineTasks;
 
-public class ReadAppRevisionFromGit : IPipelineTask
+public class ReadAppRevisionAndBranchFromGit : IPipelineTask
 {
 	public void Run( Pipeline ppln, Context ctx )
 	{
 		var buildArtifactsDir	= "Assets/Resources/Fun.Flexy/BuildArtifacts";
 		var revisionPath		= buildArtifactsDir + "/Revision.txt";
-		var revision			= GetGitRevision() ?? "";
+		var branchPath			= buildArtifactsDir + "/Branch.txt";
+		var (revision, branch)	= GetGitRevisionAndBranch();
 		
 		if (!Directory.Exists(buildArtifactsDir))
 			Directory.CreateDirectory(buildArtifactsDir);
 		
 		File.WriteAllText(revisionPath, revision);
-		Directory.GetParent(Application.dataPath);
-
-		Debug.Log( $"[ReadAppRevisionFromGit] - Got revision {revision}" );
+		File.WriteAllText(branchPath, branch);
+		
+		Debug.Log( $"[Set AppRevision and Branch From Git] - Got revision {revision} and branch {branch}" );
 		AssetDatabase.ImportAsset(revisionPath, ImportAssetOptions.ForceSynchronousImport);
+		AssetDatabase.ImportAsset(branchPath,	ImportAssetOptions.ForceSynchronousImport);
 	}
 	
-	public static String? GetGitRevision( )
+	public static (String?, String?) GetGitRevisionAndBranch( )
 	{
 		DirectoryInfo? gitDir = null;
 		try
@@ -44,7 +46,7 @@ public class ReadAppRevisionFromGit : IPipelineTask
 			if (gitDir == null)
 			{
 				Debug.LogWarning("Git repository not found");
-				return null;
+				return ("", "");
 			}
         
 			// Read HEAD file
@@ -52,28 +54,29 @@ public class ReadAppRevisionFromGit : IPipelineTask
 			if (!File.Exists(headPath))
 			{
 				Debug.LogWarning("HEAD file not found");
-				return null;
+				return ("", "");
 			}
         
 			var headContent = File.ReadAllText(headPath).Trim();
         
 			// HEAD contains the revision directly (detached HEAD state)
 			if (!headContent.StartsWith("ref: ")) 
-				return headContent;
+				return (headContent, "");
 
 			// HEAD contains a reference. Extract the reference path by removing "ref: " prefix
-			var refFilePath = Path.Combine(gitDir.FullName, headContent[5..]);
+			var branch		= Path.GetFileName(headContent[5..]);
+			var refFilePath	= Path.Combine(gitDir.FullName, headContent[5..]);
             
 			if (File.Exists(refFilePath))
-				return File.ReadAllText(refFilePath).Trim();
+				return (File.ReadAllText(refFilePath).Trim(), branch);
 
 			Debug.LogWarning($"Reference file not found: {refFilePath}");
-			return null;
+			return ("", "");
 		}
 		catch (Exception ex)
 		{
 			Debug.LogError($"Error reading git revision: {ex.Message}");
-			return null;
+			return ("", "");
 		}
 	}
 }
