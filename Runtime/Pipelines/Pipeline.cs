@@ -38,6 +38,7 @@ namespace Flexy.AssetRefs.Pipelines
 						continue;
 
 					#if UNITY_EDITOR
+					Debug.Log($"{name}, {UnityEditor.ObjectNames.NicifyVariableName( et.Task.GetType().Name )}, progress: {i/(Single)EnabledTasks.Length}");
 					UnityEditor.EditorUtility.DisplayProgressBar(name, UnityEditor.ObjectNames.NicifyVariableName( et.Task.GetType().Name ), i/(Single)EnabledTasks.Length);
 					#endif
 					et.Task.Run(this, ctx);
