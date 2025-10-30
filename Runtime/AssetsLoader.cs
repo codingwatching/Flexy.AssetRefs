@@ -170,16 +170,16 @@ public abstract class AssetsLoader
 	}
 	public	static			AssetRef				EditorGetAssetAddress		( Object asset )						
 	{
-		if( !asset )
+		if (!asset)
 			return default;
 		
 #if UNITY_EDITOR
 		
-		if( (asset is MonoBehaviour or GameObject or ScriptableObject || UnityEditor.AssetDatabase.IsMainAsset( asset )) && UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid, out Int64 _ ) )
-			return new( new UnityEditor.GUID( guid ).ToHash( ), 0 );	
+		if ((asset is Component or GameObject or ScriptableObject || UnityEditor.AssetDatabase.IsMainAsset(asset)) && UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid, out Int64 _ ))
+			return new( new UnityEditor.GUID(guid).ToHash(), 0 );	
 		
-		if( UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid2, out long instanceId ) )
-			return new( new UnityEditor.GUID( guid2 ).ToHash( ), instanceId );
+		if (UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid2, out long instanceId ))
+			return new( new UnityEditor.GUID(guid2).ToHash(), instanceId );
 		
 #endif
 		

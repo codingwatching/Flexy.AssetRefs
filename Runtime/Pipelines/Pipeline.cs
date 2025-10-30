@@ -69,6 +69,7 @@ namespace Flexy.AssetRefs.Pipelines
 		}
 		
 #if UNITY_EDITOR
+		// run it in CI with: "C:/Path/To/Unity.exe" -batchmode -quit -projectPath "D:/Path/To/Project" -executeMethod Flexy.AssetRefs.Pipelines.Pipeline.CmdRun -pipeline "PipelineName or GUID" 
 		public static void CmdRun	( )		
 		{
 			var args = Environment.GetCommandLineArgs();
