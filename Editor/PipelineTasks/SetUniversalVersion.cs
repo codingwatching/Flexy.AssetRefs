@@ -38,20 +38,33 @@ public class SetUniversalVersion : IPipelineTask
 		var minor = "";
 		switch (_minor)
 		{
-			case EMinorType.MonthAndDay: minor = $"{time.Month:00}{time.Day:00}"; break;
+			case EMinorType.MonthAndDay:
+			{ 
+				minor = $"{time.Month:00}{time.Day:00}"; 
+				break;
+			}
+			case EMinorType.QuarterAndDay:
+			{ 
+				var quarter = (time.Month-1)/3+1;
+				var day		= Math.Min(time.Day, 30) + (time.Month-1) % 3 * 30;
+				minor		= $"{quarter:0}{day:00}"; 
+				break;
+			}
 			case EMinorType.SeasonAndDay:
+			{
 				var season	= time.Month switch { 1 => 1, 2 => 1, 3 => 2, 4 => 2, 5 => 2, 6 => 3, 7 => 3, 8 => 3, 9 => 4, 10 => 4, 11 => 4, 12 => 5 };
 				var day		= Math.Min(time.Day, 30) + (time.Month < 3 ? time.Month-1 : (time.Month-3) % 3) * 30;
-				minor = $"{season:0}{day:00}";
+				minor		= $"{season:0}{day:00}";
 				break;
+			}
 		}
 
 		var buildTime = _buildTime switch
 		{
 			EBuildTime.Hours					=> $"{time.Hour + (time.Day == 31 ? 50 : 0):00}",
 			EBuildTime.HoursAnd10th				=> $"{time.Hour + (time.Day == 31 ? 50 : 0):00}{Mathf.RoundToInt(time.Minute / 6f):0}",
-			EBuildTime.QwartersOfHours			=> $"{time.Hour*4 + time.Minute/15:00}",
-			EBuildTime.QwartersOfHoursAnd10th	=> $"{time.Hour*4 + time.Minute/15:00}{Mathf.RoundToInt(time.Minute % 15 / 1.5f)}",
+			EBuildTime.QuartersOfHours			=> time.Day == 31 ? $"99" : $"{time.Hour*4 + time.Minute/15:00}",
+			EBuildTime.QuartersOfHoursAnd10th	=> time.Day == 31 ? $"99{time.Hour/2.4f:0}" : $"{time.Hour*4 + time.Minute/15:00}{Mathf.RoundToInt(time.Minute % 15 / 1.5f)}",
 		};
 		
 		var versionString = $"{major}.{minor}.{buildTime}";
@@ -82,14 +95,15 @@ public class SetUniversalVersion : IPipelineTask
 	public enum EMinorType : byte
 	{
 		MonthAndDay,
+		QuarterAndDay,
 		SeasonAndDay,
 	}
 	public enum EBuildTime : byte
 	{
 		Hours,
-		QwartersOfHours,
+		QuartersOfHours,
 		HoursAnd10th,
-		QwartersOfHoursAnd10th,
+		QuartersOfHoursAnd10th,
 	}
 }
 
