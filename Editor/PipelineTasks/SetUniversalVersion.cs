@@ -27,12 +27,14 @@ public class SetUniversalVersion : IPipelineTask
 		{
 			ETimeSource.UTC		=> DateTime.UtcNow, 
 			ETimeSource.Local	=> DateTime.Now,
+			_					=> DateTime.UtcNow
 		};
 		
 		var major = _major switch
 		{
 			EMajorType.YearMinusN	=> time.Year - _n,
 			EMajorType.N			=> _n,
+			_						=> _n
 		};
 		
 		var minor = "";
