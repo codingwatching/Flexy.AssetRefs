@@ -108,33 +108,101 @@ namespace Flexy.AssetRefs.Editor
 	[CustomPropertyDrawer(typeof(Pipeline.EnabledTask))]
 	public class EnabledTaskDrawer : PropertyDrawer
 	{
-		private static Type[]		_types	= null!;
-		private static String[]		_names	= null!;
-	
 		public override Boolean			CanCacheInspectorGUI	( SerializedProperty property )		=> false;
 		public override VisualElement	CreatePropertyGUI		( SerializedProperty property )		
 		{
-			var taskProp	= property.FindPropertyRelative("Task");
-			
-			// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-			if (_types == null)
+			var foldout = new Foldout
 			{
-				_types = GetAssignableTypes( GetType( taskProp.managedReferenceFieldTypename ) ).Prepend(null).ToArray()!;
-				_names = _types.Select( t => ObjectNames.NicifyVariableName( t?.Name ?? "⦿" ) ).ToArray( );
-			}
-
-			var rootVe				= new VisualElement( ){ style = { flexDirection = FlexDirection.Row } };
-			var enabledVertical		= new VisualElement( );
-			var enabledCheckbox		= new Toggle( ){bindingPath = "Enabled", style = { marginLeft = -11, marginRight = 2}};
-			var drawerImgui			= new IMGUIContainer( new PropDrawer( taskProp ).OnGui ){ style = { flexGrow = 1}};
+				text = property.displayName,
+				pickingMode = PickingMode.Ignore, 
+				bindingPath = property.propertyPath,
+			};
 			
-			enabledVertical.Add( enabledCheckbox );
-			rootVe.Add( enabledVertical );
-			rootVe.Add( drawerImgui );
+			var toggle = foldout.Q<Toggle>(null, Foldout.toggleUssClassName);
+			var toggleRow = toggle.hierarchy[0];
+			var checkmark = toggleRow.hierarchy[0];
+			var toggleLabel = toggleRow.hierarchy[1];
 			
-			return rootVe;
+			toggle.style.marginTop = 0;
+			toggle.style.marginBottom = 0;
+			toggleLabel.style.display = DisplayStyle.None;
+			checkmark.style.display = DisplayStyle.None;
+			foldout.value = true;
+			
+			var header	= new VisualElement( ){ style = { flexDirection = FlexDirection.Row, flexGrow = 1} };
+			
+			toggleRow.hierarchy.Add(header);
+							
+			BuildUI(property, foldout, header);
+			
+			foldout.TrackPropertyValue(property, _ => BuildUI(property, foldout, header));
+			
+			return foldout;
 		}
-	
+		
+		private			void			BuildUI				( SerializedProperty property, Foldout foldout, VisualElement header )
+		{
+			header	.Unbind	();
+			header	.Clear	();
+			foldout.contentContainer.Unbind	();
+			foldout.contentContainer.Clear	();
+
+			var taskProp	= property.FindPropertyRelative("Task");
+			var val			= taskProp.managedReferenceValue;
+			var displayName	= ObjectNames.NicifyVariableName( val?.GetType().Name ?? "None" );
+			
+			if( taskProp.propertyPath.EndsWith( "]" ) )
+			{
+				// This is array element
+				var start	= taskProp.propertyPath.LastIndexOf('[')+1;
+				var index	= taskProp.propertyPath[start..^1];
+				displayName = $"{index}. " + displayName;
+			}
+			
+			var enabledCheckbox		= new Toggle( ){bindingPath = property.FindPropertyRelative("Enabled").propertyPath, style = { marginLeft = 0, marginRight = 5}};
+			var nameLabel			= new Label( displayName ){style = {unityFontStyleAndWeight = FontStyle.Bold, alignSelf = Align.Center } };
+			var button				= new Button { text = "⦿", style = { width = 20, paddingLeft = 0, paddingRight = 0, marginLeft = 0, marginRight = -2} };
+			
+			enabledCheckbox.RegisterValueChangedCallback( v => foldout.value = true );
+			
+			button.clicked += () =>
+			{
+				var types = GetAssignableTypes( GetType( taskProp.managedReferenceFieldTypename ) ).ToArray()!;
+				var names = types.Select( t => ObjectNames.NicifyVariableName( t?.Name ) ).ToArray();
+			
+				var gm = new GenericMenu();
+
+				for (var i = 0; i < names.Length; i++)
+					gm.AddItem(new GUIContent(names[i]), false, Choose, (i, taskProp, types));
+			
+				gm.DropDown(button.worldBound);
+				
+				static void Choose(System.Object userData)
+				{
+					var (newIndex, taskProp, types) = ((Int32, SerializedProperty, Type[]))userData;
+					
+					taskProp.managedReferenceValue = Activator.CreateInstance( types[newIndex] );
+					taskProp.serializedObject.ApplyModifiedProperties();
+					taskProp.serializedObject.Update();
+				}
+			};
+			var flexibleSpace		= new VisualElement { style = { flexGrow = 1}};
+			
+			header.Add( enabledCheckbox );
+			header.Add( nameLabel );
+			header.Add( flexibleSpace );
+			header.Add( button );
+			
+			var subProp	= taskProp.Copy();
+			var depth	= subProp.depth;
+        			
+			for ( var enterChildren = true ; subProp.NextVisible(enterChildren) && subProp.depth > depth; enterChildren = false )
+				foldout.contentContainer.Add( new PropertyField(subProp) );
+			
+			foldout.BindProperty( property );
+			foldout.value = true;
+		}
+		
 		private static	Type			GetType					( String typename )		
 		{
 			var parts		= typename.Split( ' ' );
@@ -144,82 +212,11 @@ namespace Flexy.AssetRefs.Editor
 		{
 			var nonUnityTypes	= TypeCache.GetTypesDerivedFrom(type).Where(IsAssignableNonUnityType).ToList();
 			nonUnityTypes.Sort( (l, r) => String.Compare( l.FullName, r.FullName, StringComparison.Ordinal) );
-			nonUnityTypes.Insert(0, null);
 			return nonUnityTypes;
         
 			Boolean IsAssignableNonUnityType(Type type)
 			{
 				return ( type.IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface ) && !type.IsSubclassOf(typeof(UnityEngine.Object)) && type.GetCustomAttributes().All( a => !a.GetType().Name.Contains( "BakingType" )  );
-			}
-		}
-
-		private class PropDrawer
-		{
-			public PropDrawer( SerializedProperty prop ) { _prop = prop; }
-			private readonly SerializedProperty _prop;
-			
-			public	void	OnGui			( )		
-			{
-				try
-				{
-					GUILayout.BeginHorizontal( );
-				
-					var property = _prop.Copy();
-
-					if( property.propertyPath.EndsWith( "]" ) )
-					{
-						// This is array element
-						var start	= property.propertyPath.LastIndexOf('[')+1;
-						var index	= property.propertyPath[start..^1];
-						GUILayout.Label( $"{index}. ", EditorStyles.boldLabel );
-					}
-				
-					var val		= property.managedReferenceValue;
-					var name	= ObjectNames.NicifyVariableName( val?.GetType().Name ?? "None" );
-					
-					GUILayout.Label( name, EditorStyles.boldLabel );
-					
-					GUILayout.FlexibleSpace( );
-					var newIndex = EditorGUILayout.Popup( 0, _names, GUILayout.Width( 35 ) );
-        			
-					if( newIndex != 0 )
-					{
-						property.managedReferenceValue = Activator.CreateInstance( _types[newIndex] );
-						property.serializedObject.ApplyModifiedProperties( );
-						property.serializedObject.Update( );
-					}
-				}
-				catch
-				{
-					return;
-				}
-				finally
-				{
-					GUILayout.EndHorizontal( );
-				}
-			
-				DrawProperties( );
-			}
-			private	void	DrawProperties	( )		
-			{
-				//Properties
-				{
-					EditorGUI.indentLevel++;
-					var property	= _prop.Copy( );
-					var depth		= property.depth;
-        			
-					for ( var enterChildren = true ; property.NextVisible( enterChildren ) && property.depth > depth; enterChildren = false )
-					{
-						EditorGUILayout.PropertyField( property );
-					}
-					EditorGUI.indentLevel--;
-				}
-        	
-				if( _prop.propertyPath.Contains("Array.data") )
-					GUILayout.Space( 10 );
-			
-				_prop.serializedObject.ApplyModifiedProperties( );
-				_prop.serializedObject.Update( );
 			}
 		}
 	}
