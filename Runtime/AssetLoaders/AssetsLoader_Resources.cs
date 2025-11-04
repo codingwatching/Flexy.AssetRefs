@@ -27,47 +27,47 @@ public class AssetsLoader_Resources : AssetsLoader
 	{		
 		var resourceRef	= Resources.Load<ResourceRef>( $"Fun.Flexy/AssetRefs/{@ref}" );
 
-		if( !resourceRef )
+		if (!resourceRef)
 			resourceRef		= Resources.Load<ResourceRef>( $"Fun.Flexy/AssetRefs/{@ref.Uid.ToString()}" );
 		
-		if( !resourceRef )
+		if (!resourceRef)
 		{
 			Debug.LogError( $"[AssetsLoader] Resources - RefFile is absent for: {@ref}" );
 			return null;
 		}
 		
-		return LoadFinalising<T>( resourceRef.Ref );
+		return LoadFinalising<T>(resourceRef.Ref);
 	}
 	
 	protected override		String					GetSceneName_Impl			( SceneRef @ref )								
 	{
 		var address		= @ref.Uid;
-		var asset		= Resources.Load<ResourceRef>( $"Fun.Flexy/AssetRefs/{address}" );
+		var asset		= Resources.Load<ResourceRef>($"Fun.Flexy/AssetRefs/{address}");
 			
 		return asset.Name ?? "";
 	}
 	protected override		LoadSceneTask			LoadSceneAsync_Impl			( SceneRef @ref, LoadSceneTask.Parameters p )	
 	{
 		var address			= @ref.Uid;
-		var asset			= Resources.Load<ResourceRef>( $"Fun.Flexy/AssetRefs/{address}" );
+		var asset			= Resources.Load<ResourceRef>($"Fun.Flexy/AssetRefs/{address}");
 		var sceneLoadOp		= SceneManager.LoadSceneAsync( asset.Name, new LoadSceneParameters( p.LoadMode, p.PhysicsMode ) );
 		sceneLoadOp.allowSceneActivation = p.ActivateOnLoad;
 		sceneLoadOp.priority = p.Priority;
-		var scene			= SceneManager.GetSceneAt( SceneManager.sceneCount - 1 );	
+		var scene			= SceneManager.GetSceneAt(SceneManager.sceneCount - 1);	
 		
-		var info			= LoadSceneTask.RentSceneLoadData( );
+		var info			= LoadSceneTask.RentSceneLoadData();
 		info.Scene			= scene;
 		info.DelaySceneActivation = !p.ActivateOnLoad;
 		
-		return new( SceneLoadWaitImpl( sceneLoadOp, info ), info );
+		return new( SceneLoadWaitImpl(sceneLoadOp, info), info );
 	}
 
 	private					T?						LoadFinalising<T>			( Object? obj ) where T : Object				
 	{
 		var result	= obj; 
 		
-		if( result is GameObject go && typeof(T).IsSubclassOf(typeof(MonoBehaviour)) )
-			return go.GetComponent<T>( );
+		if (result is GameObject go && typeof(T).IsSubclassOf(typeof(Component)))
+			return go.GetComponent<T>();
 					
 		return (T?)result;
 	}

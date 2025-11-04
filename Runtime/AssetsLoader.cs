@@ -29,45 +29,44 @@ public abstract class AssetsLoader
 		try
 		{
 #if UNITY_EDITOR
-			if ( !RuntimeBehaviorEnabled || !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode )
+			if (!RuntimeBehaviorEnabled || !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
 			{
-				return EditorLoadAsync( @ref );
+				return EditorLoadAsync(@ref);
+				
 				static async UniTask<T?> EditorLoadAsync		( AssetRef @ref )
 				{
-					var asset = EditorLoadAsset( @ref, typeof(T) );
-					
-					await UniTask.NextFrame( PlayerLoopTiming.EarlyUpdate );
-					
+					var asset = EditorLoadAssetRaw(@ref);
+					await UniTask.NextFrame(PlayerLoopTiming.EarlyUpdate);
 					return (T?)asset;
 				}
 			}
 #endif	
 			
-			return LoadAssetAsync_Impl<T>( @ref );
+			return LoadAssetAsync_Impl<T>(@ref);
 		}
 		catch( Exception ex )
 		{
-			Debug.LogException( ex );
+			Debug.LogException(ex);
 			return UniTask.FromResult<T?>(null);
 		}
 	}
 	public 					T?						LoadAssetSync<T>			( AssetRef @ref ) where T:Object		
 	{
-		if ( @ref.IsNone )
+		if (@ref.IsNone)
 			return null;
 		
 		try
 		{
 #if UNITY_EDITOR
-			if ( !RuntimeBehaviorEnabled || !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode )
-				return (T?)EditorLoadAsset( @ref, typeof(T) );
+			if (!RuntimeBehaviorEnabled || !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+				return (T?)EditorLoadAssetRaw(@ref);
 #endif
 			
-			return LoadAssetSync_Impl<T>( @ref );
+			return LoadAssetSync_Impl<T>(@ref);
 		}
 		catch( Exception ex )
 		{
-			Debug.LogException( ex );
+			Debug.LogException(ex);
 			return null;
 		}
 	}
@@ -120,7 +119,7 @@ public abstract class AssetsLoader
 		
 		return task;
 	}
-	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, params Type[] components )
+	public					LoadSceneTask			LoadDummyScene				( GameObject ctx, LoadSceneMode mode, params Type[] components )	
 	{
 		return LoadDummyScene( ctx, mode, UnloadSceneOptions.None, null, components );
 	}
@@ -135,32 +134,37 @@ public abstract class AssetsLoader
 	
 	public	static			T?						EditorLoadAsset<T>			( AssetRef<T> address ) where T : Object
 	{
-		var asset = EditorLoadAsset				( address, typeof(T) );
+		var asset = EditorLoadAssetRaw	(address);
+		
+		if (asset is GameObject go && typeof(T).IsSubclassOf(typeof(Component)))
+			return go.GetComponent<T>();
+		
 		return (T?)asset;
 	}
-	public	static			Object?					EditorLoadAsset				( AssetRef address, Type type )			
+	public	static			Object?					EditorLoadAsset				( AssetRef address, Type _ ) => EditorLoadAssetRaw(address);
+	public	static			Object?					EditorLoadAssetRaw			( AssetRef address )			
 	{
 #if UNITY_EDITOR
 		
-		if ( address.IsNone )
+		if (address.IsNone)
 			return null;
 
-		if( address.SubId == 0 ) //pure giud
+		if (address.SubId == 0) //pure guid
 		{
-			var path = UnityEditor.AssetDatabase.GUIDToAssetPath( address.Uid.ToGUID( ) );
+			var path = UnityEditor.AssetDatabase.GUIDToAssetPath( address.Uid.ToGUID() );
 		
-			return UnityEditor.AssetDatabase.LoadAssetAtPath( path, type );
+			return UnityEditor.AssetDatabase.LoadMainAssetAtPath(path);
 		}
 		else
 		{
-			var path		= UnityEditor.AssetDatabase.GUIDToAssetPath( address.Uid.ToGUID( ) );
+			var path		= UnityEditor.AssetDatabase.GUIDToAssetPath( address.Uid.ToGUID() );
 			
-			foreach ( var asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath( path ) )
+			foreach ( var asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path) )
 			{
-				if ( !asset || !UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid2, out Int64 instanceId ) ) 
+				if (!asset || !UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier( asset, out var guid2, out Int64 instanceId )) 
 					continue;
 				
-				if( address.SubId == instanceId )
+				if (address.SubId == instanceId)
 					return asset;
 			}
 		}
@@ -168,7 +172,7 @@ public abstract class AssetsLoader
 		
 		return null;
 	}
-	public	static			AssetRef				EditorGetAssetAddress		( Object asset )						
+	public	static			AssetRef				EditorGetAssetAddress		( Object asset )				
 	{
 		if (!asset)
 			return default;

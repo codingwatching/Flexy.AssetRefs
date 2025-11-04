@@ -35,12 +35,12 @@ namespace Flexy.AssetRefs.Editor
 			var assetRef		= new AssetRef( uidProp.hash128Value, subIdProp.longValue );
 			
 			if( !_assets.ContainsKey( property.propertyPath ) )
-			 	_assets[property.propertyPath] = ( assetRef, AssetsLoader.EditorLoadAsset( assetRef, type ) );
+			 	_assets[property.propertyPath] = ( assetRef, AssetsLoader.EditorLoadAssetRaw( assetRef ) );
 			
 			_assets.TryGetValue( property.propertyPath, out var assetData );
 
 			if( assetData.@ref != assetRef )
-				assetData = _assets[property.propertyPath] = ( assetRef, AssetsLoader.EditorLoadAsset( assetRef, type ) );
+				assetData = _assets[property.propertyPath] = ( assetRef, AssetsLoader.EditorLoadAssetRaw( assetRef ) );
 			
 			var drawPreview		= DrawPreview( uidProp, fieldInfo ); 
 			var isInline		= ArrayTableDrawer.DrawingInTableGUI;
