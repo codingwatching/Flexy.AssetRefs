@@ -35,9 +35,9 @@ public abstract class AssetsLoader
 				
 				static async UniTask<T?> EditorLoadAsync		( AssetRef @ref )
 				{
-					var asset = EditorLoadAssetRaw(@ref);
+					var asset = EditorLoadAsset(new AssetRef<T>(@ref.Uid, @ref.SubId));
 					await UniTask.NextFrame(PlayerLoopTiming.EarlyUpdate);
-					return (T?)asset;
+					return asset;
 				}
 			}
 #endif	
@@ -59,7 +59,7 @@ public abstract class AssetsLoader
 		{
 #if UNITY_EDITOR
 			if (!RuntimeBehaviorEnabled || !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-				return (T?)EditorLoadAssetRaw(@ref);
+				return EditorLoadAsset(new AssetRef<T>(@ref.Uid, @ref.SubId));
 #endif
 			
 			return LoadAssetSync_Impl<T>(@ref);

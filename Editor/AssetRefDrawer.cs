@@ -9,7 +9,7 @@ namespace Flexy.AssetRefs.Editor
 		const Single ImageHeight = 60;
 		
 		// used to store cached objects of current SerializedObject our drawer part of
-		private readonly Dictionary<String, (AssetRef @ref, Object? asset)> _assets = new( );
+		private readonly Dictionary<String, (AssetRef @ref, Object? asset)> _assets = new();
 		
 		public override		void	OnGUI				( Rect position, SerializedProperty property, GUIContent label )	
 		{
@@ -34,22 +34,22 @@ namespace Flexy.AssetRefs.Editor
 			
 			var assetRef		= new AssetRef( uidProp.hash128Value, subIdProp.longValue );
 			
-			if( !_assets.ContainsKey( property.propertyPath ) )
+			if (!_assets.ContainsKey( property.propertyPath ))
 			 	_assets[property.propertyPath] = ( assetRef, AssetsLoader.EditorLoadAssetRaw( assetRef ) );
 			
 			_assets.TryGetValue( property.propertyPath, out var assetData );
 
-			if( assetData.@ref != assetRef )
+			if (assetData.@ref != assetRef)
 				assetData = _assets[property.propertyPath] = ( assetRef, AssetsLoader.EditorLoadAssetRaw( assetRef ) );
 			
 			var drawPreview		= DrawPreview( uidProp, fieldInfo ); 
 			var isInline		= ArrayTableDrawer.DrawingInTableGUI;
 			
-			if( drawPreview & isInline )
+			if (drawPreview & isInline)
 				position.xMin	+= 80;
 			
 			EditorGUI.BeginChangeCheck( );
-			var newobj		= EditorGUI.ObjectField( position, label, assetData.asset, type, false );
+			var newobj	= EditorGUI.ObjectField( position, label, assetData.asset, type, false );
 			
 			var isChanged = EditorGUI.EndChangeCheck( );
 			
@@ -62,20 +62,21 @@ namespace Flexy.AssetRefs.Editor
 				return;
 			}
 			
-			if( isChanged )
+			if (isChanged)
 			{
-				var @ref		= AssetsLoader.EditorGetAssetAddress( newobj );
+				var @ref	= AssetsLoader.EditorGetAssetAddress( newobj );
+				newobj		= AssetsLoader.EditorLoadAssetRaw( @ref );
 				
 				uidProp.hash128Value			= @ref.Uid; 
 				subIdProp.longValue				= @ref.SubId;
-				_assets[property.propertyPath]	= ( @ref, newobj );
+				_assets[property.propertyPath]	= (@ref, newobj);
 				
-				if( drawPreview )
+				if (drawPreview)
 				{
 					var sprite		= newobj as Sprite;
 					var tx			= newobj is Sprite sp ? sp.texture : newobj as Texture2D;
 					
-					if( isInline )
+					if (isInline)
 					{
 						var spriteRect		= position;
 						var isOdd			= ArrayTableDrawer.DrawingArrayElementOnPage % 2 == 0; 
@@ -84,13 +85,13 @@ namespace Flexy.AssetRefs.Editor
 						spriteRect.width	= 40;
 						spriteRect.height	= 40;
 						
-						if( !isOdd )
+						if (!isOdd)
 						{
 							spriteRect.y	-= 20;
 							spriteRect.x	+= 40;
 						}
 						
-						if( sprite is not null )
+						if (sprite is not null)
 							DrawTexturePreview( spriteRect, sprite );
 						else
 							GUI.DrawTexture( spriteRect, tx, ScaleMode.ScaleToFit );
@@ -100,7 +101,7 @@ namespace Flexy.AssetRefs.Editor
 						position.y += 5;
 		                position.height = ImageHeight + EditorGUI.GetPropertyHeight( property, label, true );
 		                
-		                if( sprite is not null )
+		                if (sprite is not null)
 							DrawTexturePreview( position, sprite );
 						else
 							GUI.DrawTexture( position, tx, ScaleMode.ScaleToFit );
@@ -108,7 +109,7 @@ namespace Flexy.AssetRefs.Editor
 				}
 			}
 			
-			EditorGUI.EndProperty( );
+			EditorGUI.EndProperty();
 		}
 		protected static	void	DrawTexturePreview	( Rect position, Sprite sprite )									
         {
@@ -137,17 +138,17 @@ namespace Flexy.AssetRefs.Editor
 		{
 			var type = fieldInfo.FieldType;
 			
-			if			( type.IsArray )															type = fieldInfo.FieldType.GetElementType()!;
-			else if		( type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>) )	type = fieldInfo.FieldType.GetGenericArguments()[0];
+			if			(type.IsArray)																type = fieldInfo.FieldType.GetElementType()!;
+			else if		(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))	type = fieldInfo.FieldType.GetGenericArguments()[0];
 			
-			if( type.IsGenericType )	type = type.GetGenericArguments()[0];
-			else						type = typeof(Object);
+			if (type.IsGenericType)	type = type.GetGenericArguments()[0];
+			else					type = typeof(Object);
 			
 			return type;
 		}
 		protected static	Boolean	DrawPreview			( SerializedProperty property, FieldInfo fieldInfo )				
 		{
-			var type = GetRefType( fieldInfo );
+			var type = GetRefType(fieldInfo);
 			
 			return type == typeof(Sprite) && property.hash128Value != default; 
 		}
