@@ -13,7 +13,6 @@ global using UnityEngine.Scripting.APIUpdating;
 global using Flexy.AssetRefs.Extra;
 global using Flexy.AssetRefs.AssetLoaders;
 global using Flexy.AssetRefs.Pipelines;
-global using Flexy.Serialisation;
 
 global using Object = UnityEngine.Object;
 

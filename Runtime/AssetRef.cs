@@ -2,7 +2,7 @@ namespace Flexy.AssetRefs;
 
 //[DebuggerDisplay("{ToString()} = {AssetsLoader.EditorLoadAsset()}")]
 [Serializable]
-public struct AssetRef<T> : IRefLike, ISerializeAsString, IEquatable<AssetRef<T>> where T: Object
+public struct AssetRef<T> : IRefLike, IEquatable<AssetRef<T>> where T: Object
 {
 	public	AssetRef ( Hash128 uid, Int64 subId = 0 )	{ _uid = uid; _subId = subId; }
 	public	AssetRef ( String refAddress )				{ this = default; FromString( refAddress ); }

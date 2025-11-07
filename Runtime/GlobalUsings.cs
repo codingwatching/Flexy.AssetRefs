@@ -9,6 +9,5 @@ global using UnityEngine.Scripting.APIUpdating;
 global using Cysharp.Threading.Tasks;
 
 global using Flexy.AssetRefs.AssetLoaders;
-global using Flexy.Serialisation;
 
 global using Object = UnityEngine.Object;

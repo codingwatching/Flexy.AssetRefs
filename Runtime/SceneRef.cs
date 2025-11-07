@@ -1,7 +1,7 @@
 namespace Flexy.AssetRefs;
 
 [Serializable]
-public struct SceneRef : IRefLike, ISerializeAsString, IEquatable<SceneRef>
+public struct SceneRef : IRefLike, IEquatable<SceneRef>
 {
 	public	SceneRef ( Hash128 uid )		{ _uid = uid; }
 	public	SceneRef ( String refAddress )	{ this = default; FromString( refAddress ); }
