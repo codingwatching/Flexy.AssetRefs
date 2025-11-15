@@ -8,6 +8,7 @@ public class SetUniversalVersion : IPipelineTask
 	[SerializeField]	EMajorType	_major;
 	[SerializeField]	EMinorType	_minor;
 	[SerializeField]	EBuildTime	_buildTime;
+	[SerializeField]	Boolean		_setBuildNumber = true;
 
 	public void Run( Pipeline ppln, Context ctx )
 	{
@@ -73,10 +74,13 @@ public class SetUniversalVersion : IPipelineTask
 
 		PlayerSettings.bundleVersion				= versionString;
 		
-		PlayerSettings.Android.bundleVersionCode	= Int32.Parse(versionString.Replace(".", ""));
-		PlayerSettings.macOS.buildNumber			= versionString;
-		PlayerSettings.tvOS.buildNumber				= versionString;
-		PlayerSettings.iOS.buildNumber				= versionString;
+		if (_setBuildNumber)
+		{
+			PlayerSettings.Android.bundleVersionCode	= Int32.Parse(versionString.Replace(".", ""));
+			PlayerSettings.macOS.buildNumber			= versionString;
+			PlayerSettings.tvOS.buildNumber				= versionString;
+			PlayerSettings.iOS.buildNumber				= versionString;
+		}
 		
 		if (String.IsNullOrWhiteSpace(_versionTag))
 			Debug.Log( $"[Set Universal Version] - Setting universal version {versionString}" );
