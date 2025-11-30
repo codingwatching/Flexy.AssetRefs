@@ -7,6 +7,9 @@ public class BuildPlayer : IPipelineTask
 	[SerializeField] private String		_outputDirectory	= "Builds";
 	[SerializeField] private String		_buildName			= "MyGame";
 	[SerializeField] private Boolean	_disablePreprocessPipelines = false;
+	[Header("Additions")]
+	[SerializeField] private Boolean 	_nameAddTime;
+	[SerializeField] private Boolean 	_nameAddHash; 
 
 	public void Run( Pipeline ppln, Context ctx )
 	{
@@ -35,6 +38,12 @@ public class BuildPlayer : IPipelineTask
 		outputDirectory = Path.Combine(outputDirectory, fullBuildName);
 		fullBuildName	= _buildName;
 #endif
+        
+        if (_nameAddTime)
+			fullBuildName += $" {DateTime.Now.Hour:00}.{DateTime.Now.Minute:00}.{DateTime.Now.Second:00}";
+			
+        if (_nameAddHash)
+			try { fullBuildName += $" {File.ReadAllText($"Assets/Resources/Fun.Flexy/BuildArtifacts/Revision.txt")[..7]}"; } catch {}
         
 		var outputPath	= Path.Combine(outputDirectory, fullBuildName);
         outputPath		+= outoutExtension;
