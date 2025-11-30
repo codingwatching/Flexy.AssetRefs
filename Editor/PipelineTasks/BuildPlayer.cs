@@ -7,6 +7,8 @@ public class BuildPlayer : IPipelineTask
 	[SerializeField] private String		_outputDirectory	= "Builds";
 	[SerializeField] private String		_buildName			= "MyGame";
 	[SerializeField] private Boolean	_disablePreprocessPipelines = false;
+	[Header("Options")]
+	[SerializeField] private Boolean 	_developmentBuild;
 	[Header("Additions")]
 	[SerializeField] private Boolean 	_nameAddTime;
 	[SerializeField] private Boolean 	_nameAddHash; 
@@ -59,7 +61,7 @@ public class BuildPlayer : IPipelineTask
 			scenes = scenes,
 			locationPathName = outputPath,
 			target = EditorUserBuildSettings.activeBuildTarget,
-			options = BuildOptions.None
+			options = _developmentBuild ? BuildOptions.Development : BuildOptions.None
 		};
 
 		if (_disablePreprocessPipelines)
