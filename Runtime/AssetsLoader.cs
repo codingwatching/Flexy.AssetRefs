@@ -232,7 +232,17 @@ public abstract class AssetsLoader
 			
 				SceneManager.SetActiveScene(dummy);
 			
-				new GameObject( "DummyObj", components );
+				var dummyObj = new GameObject( "DummyObj", components );
+			
+#if UNITY_URP
+				var hasCam = components.Contains(typeof(Camera));
+				if (hasCam)
+					dummyObj.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+#elif UNITY_HDRP
+				var hasCam = components.Contains(typeof(Camera));
+				if (hasCam)
+					dummyObj.AddComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalCameraData>();
+#endif
 			
 				if ( createSceneObjects != null)
 				{

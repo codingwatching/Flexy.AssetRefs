@@ -4,11 +4,37 @@ All notable changes to this package will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-## [Unreleased] 
+## [5.0.4] - 2026-01-01
 
 ### Fixed
 
 - Fixed Unloading of scenes on load dummy scene
+- Fixed AssetLoader EditorGetAssetAddress to return only guid for any Prefab
+- Fixed unconsistent AssetRef loading in editor vs build. Editor was capable for load any asset on path while build can only load exact asset on address
+- Fixed loading incorrect asset in editor and inspector
+
+### Added
+
+- Added better exception message for chaning scene list from inside build
+- Added better customisation on dummy scene creation
+- Added shortcut to load correct dummy scene for urp
+- Added auto add URP/HDRP CameraData to camera in dummy scene
+- Added SetUniversalVersion pipeline task
+- Added AppRevision and reading revision from git repo pipeline task
+- Added customisation to SetUniversalVersion
+- Added VersionTag and Branch info support
+- Added Pipeline.CmdRun static method for batch mode run and aimple BuildPlayer Task
+- Added ability to have autorun pipelines and manual run that will autorun from running
+- Added logs on running pipeline tasks
+- Added Quarters to universal versioning and correct day 31 handling
+- Added ability to not update build number while set universal version
+- Added DevBuild option into BuildPlayer task
+- Added Build player task time and name options for output name
+
+### Changed
+
+- Changed better package naming
+- Changed better editor menu naming
 
 ## [5.0.3] - 2025-03-30
 
